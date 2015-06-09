@@ -6,34 +6,33 @@ var User = db.Model.extend({
   tableName: 'users',
   hasTimestamps: true,
 
-  // hashPassword: function(){
-  //   console.log('HP called')
-  //   var self = this;
-
-
-  // },
-
   initialize: function(password){
+    this.on('creating', function(){
+      var salt = bcrypt.genSaltSync(10);
+      var hash = bcrypt.hashSync(password, salt);
+      this.set('salt', salt);
+      this.set('password', hash);
+    }, this);
+  },
+
+  checkPassword: function(password){
+    var test = bcrypt.hashSync('4321', '$2a$10$yteofpNLk/DC2TCTJMstGO');
+    console.log('test: ', test);
+    console.log('checkPass: ', password);
+    var result = false;
     var self = this;
-    var salt = bcrypt.genSaltSync(10);
-    var hash = bcrypt.hashSync(password, salt);
-    this.set('salt', salt);
-    this.set('password', hash);
-    // bcrypt.genSalt(10, function(err, salt){
-    //   if (err){
-    //     console.error(err);
-    //   }
-    //   console.log('salt:' + salt);
-    //   self.set('salt', salt);
-    //   bcrypt.hash(password, salt, function(){}, function(err, hash){
-    //     if (err){
-    //       console.error(err);
-    //     }
-    //     console.log('hash:', hash);
-    //     self.set('password', hash);
-    //   });
-    // });
+    var salt = this.get('salt');
+    console.log('salt: ', salt)
+    var check = bcrypt.hashSync(password, salt);
+    console.log('check: ',check)
+    console.log('modelPass: ',this.get('password'))
+    if(check === this.get('password')){
+      return result = true;
+    }
+
+    return result;
   }
+
 
 });
 
