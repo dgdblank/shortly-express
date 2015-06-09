@@ -51,7 +51,8 @@ function(req, res) {
 
 app.get('/links', restrict,
 function(req, res) {
-  Links.reset().fetch().then(function(links) {
+  Links.reset().where({user_id: req.session.user.get('id')})
+    .fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
@@ -78,7 +79,8 @@ function(req, res) {
         var link = new Link({
           url: uri,
           title: title,
-          base_url: req.headers.origin
+          base_url: req.headers.origin,
+          user_id: new User({username: req.session.user}).
         });
 
         link.save().then(function(newLink) {
@@ -93,6 +95,16 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+
+var getCurrentUser = function (username, callback) {
+  new User({username: username}).fetch().then(function(found){
+    if(found){
+      callback(found);
+    } else {
+      console.log('user not found');
+    }
+  })
+}
 
 // sign-up
 app.get('/signup',
