@@ -104,7 +104,7 @@ app.post('/signup', function(req, res) {
   var username = req.body.username;
   new User({username: username}).fetch().then(function(found){
     if (found) {
-      res.redirect('/login');
+      res.render('userExistsLogin');
     } else {
       var user = new User({
         username: username,
@@ -136,14 +136,13 @@ app.post('/login', function(req, res){
         if(match){
           util.createSession(req, res, found);
         } else{
-          res.redirect('/login');
+          res.render('wrongPassword');
         }
       })
       // TO DO: Add text to retry password.
     } else {
       //TO DO: Add text below.
-      console.log("That username doesn't exist! You should create one. Jerk.");
-      res.redirect('/login');
+      res.render('wrongPassword');
     }
   });
 });
