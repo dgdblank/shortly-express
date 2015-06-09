@@ -28,36 +28,24 @@ app.use(session({
   saveUninitialized: true
 }));
 
-//function to restrict entry to non logged-in users
-var restrict = function(req, res, next) {
-  if (req.session.user) {
-    next();
-  } else {
-    req.session.error = 'Access denied!';
-    console.log('login first')
-    res.redirect('/login');
-  }
-}
-
-app.get('/', restrict,
+app.get('/', util.restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', restrict,
+app.get('/create', util.restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links', restrict,
+app.get('/links', util.restrict,
 function(req, res) {
-  Links.reset().where({user_id: req.session.user.get('id')})
-    .fetch().then(function(links) {
+  Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links', restrict,
+app.post('/links', util.restrict,
 function(req, res) {
   var uri = req.body.url;
 
@@ -80,7 +68,7 @@ function(req, res) {
           url: uri,
           title: title,
           base_url: req.headers.origin,
-          user_id: new User({username: req.session.user}).
+          // user_id: new User({username: req.session.user})
         });
 
         link.save().then(function(newLink) {
@@ -96,15 +84,15 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
-var getCurrentUser = function (username, callback) {
-  new User({username: username}).fetch().then(function(found){
-    if(found){
-      callback(found);
-    } else {
-      console.log('user not found');
-    }
-  })
-}
+// var getCurrentUser = function (username, callback) {
+//   new User({username: username}).fetch().then(function(found){
+//     if(found){
+//       callback(found);
+//     } else {
+//       console.log('user not found');
+//     }
+//   })
+// }
 
 // sign-up
 app.get('/signup',
@@ -112,31 +100,24 @@ app.get('/signup',
   res.render('signup');
 });
 
-app.post('/signup',
-  function(req, res) {
-    var username = req.body.username;
-    new User({username: username}).fetch().then(function(found) {
-      if (found) {
-        res.redirect('/login');
-      }
-      else{
-        var user = new User({
-          username: username,
-          password: req.body.password
-        });
+app.post('/signup', function(req, res) {
+  var username = req.body.username;
+  new User({username: username}).fetch().then(function(found){
+    if (found) {
+      res.redirect('/login');
+    } else {
+      var user = new User({
+        username: username,
+        password: req.body.password
+      });
 
-        user.save().then(function(newUser){
-          Users.add(newUser);
-          req.session.regenerate(function(){
-            req.session.user = username;
-            res.redirect('/');
-          });
-        });
-
-      }
-    })
-  }
-);
+      user.save().then(function(newUser){
+        Users.add(newUser);
+        util.createSession(req, res, newUser);
+      });
+    }
+  });
+});
 
 // login
 app.get('/login',
@@ -144,42 +125,34 @@ function(req, res) {
   res.render('login');
 });
 
-
 app.post('/login', function(req, res){
   // checks if username exists
   var username = req.body.username;
   var password = req.body.password;
   // console.log('password: ', password);
-  new User({username: username}).fetch().then(function(found) {
-    // console.log('found: ', found);
+  new User({username: username}).fetch().then(function(found){
     if (found) {
-      if(found.checkPassword(password)){
-        console.log('logged in!');
-      // login
-        req.session.regenerate(function(){
-          req.session.user = username;
-          res.redirect('/');
-        });
-      } else{
-        res.redirect('/login');
-        // TO DO: Add text to retry password.
-      }
+      found.checkPassword(password, function(match){
+        if(match){
+          util.createSession(req, res, found);
+        } else{
+          res.redirect('/login');
+        }
+      })
+      // TO DO: Add text to retry password.
     } else {
-    // NO
       //TO DO: Add text below.
       console.log("That username doesn't exist! You should create one. Jerk.");
       res.redirect('/login');
     }
-
-  })
-})
-
+  });
+});
 
 // logout
 app.get('/logout',
 function(req, res) {
   req.session.destroy(function(){
-    res.render('logout');
+    res.redirect('/login');
   });
 });
 /************************************************************/
