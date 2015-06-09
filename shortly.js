@@ -82,7 +82,48 @@ function(req, res) {
 app.get('/signup',
   function(req, res){
   res.render('signup');
-})
+});
+
+app.post('/signup',
+  function(req, res) {
+    var username = req.body.username;
+    new User({username: username}).fetch().then(function(found) {
+      if (found) {
+        res.redirect('/login');
+      }
+      else{
+        var user = new User({
+          username: username,
+          password: req.body.password
+        });
+
+        user.save().then(function(newUser){
+          Users.add(newUser);
+          console.log('newUser----------------------');
+          console.log(newUser);
+          res.send(201, newUser);
+        });
+
+      }
+    })
+  }
+);
+    // var passwords = util.hashPassword(req.body.password);
+    //
+    // check if user already exists in database
+      // if it does
+        // res.send(user already exists)
+      // else
+        // create a new user
+          // hash password
+            // add info to database
+    // var user = new User({
+    //   username: req.body.username,
+    //   // password: req.body.password
+    //   salt: passwords[0],
+    //   password: passwords[1]
+    // });
+
 
 // login
 app.get('/login',
