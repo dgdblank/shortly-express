@@ -6,7 +6,7 @@ var User = db.Model.extend({
   tableName: 'users',
   hasTimestamps: true,
 
-  initialize: function(UserObj){
+  initialize: function(userObj){
     this.on('creating', function(){
       var salt = bcrypt.genSaltSync(10);
       var hash = bcrypt.hashSync(userObj.password);
@@ -17,6 +17,10 @@ var User = db.Model.extend({
 
   checkPassword: function(password){
     return bcrypt.compareSync(password, this.get('password'));
+  },
+
+  links: function() {
+    return this.hasMany(Link);
   }
 
 
