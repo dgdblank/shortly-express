@@ -115,7 +115,10 @@ app.post('/signup',
 
         user.save().then(function(newUser){
           Users.add(newUser);
-          res.send(201, newUser);
+          req.session.regenerate(function(){
+            req.session.user = username;
+            res.redirect('/');
+          });
         });
 
       }
@@ -153,7 +156,7 @@ app.post('/login', function(req, res){
     // NO
       //TO DO: Add text below.
       console.log("That username doesn't exist! You should create one. Jerk.");
-      res.redirect('/signup');
+      res.redirect('/login');
     }
 
   })
