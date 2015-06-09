@@ -117,12 +117,13 @@ app.post('/login', function(req, res){
   // checks if username exists
   var username = req.body.username;
   var password = req.body.password;
-  console.log('password: ', password);
+  // console.log('password: ', password);
   new User({username: username}).fetch().then(function(found) {
-    console.log('found: ', found);
+    // console.log('found: ', found);
     if (found) {
     // YES
       // grab salt from database
+      // bcrypt
       console.log(found.checkPassword(password));
       // run salt + password through bcrypt
         // if ^ matches password in db
